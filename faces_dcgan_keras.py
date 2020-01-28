@@ -105,7 +105,7 @@ class DCGAN():
             batches.append(normalized_batch)
         return batches
 
-    def train(self, epochs, batch_size=128):
+    def train(self, epochs, batch_size=64):
         x_train = np.asarray([np.asarray(Image.open(file).resize((self.img_rows, self.img_cols))) for file in glob(INPUT_DATA_DIR + '*')])
         valid = np.ones((batch_size, 1)) * random.uniform(0.9, 1.0)
         fake = np.zeros((batch_size, 1))
@@ -133,42 +133,43 @@ class DCGAN():
             print("Epoch " + str(epoch_n) + " finished in " + str(time.time() - start_time))
             self.generator.save_weights(SAVE_PATH + 'faces_g_' + str(epoch_n) + '.h5')
             self.discriminator.save_weights(SAVE_PATH + 'faces_d_' + str(epoch_n) + '.h5')
-            self.save_imgs(epoch_n, mini_epoch_n)
+            self.save_imgs(epoch_n)
             plt.plot(d_losses, label='Discriminator', alpha=0.6)
             plt.plot(g_losses, label='Generator', alpha=0.6)
             plt.title("Losses")
             plt.legend()
-            plt.savefig(OUTPUT_DIR + "losses_" + str(epoch_n) + "_" + str(mini_epoch_n) + ".png")
+            plt.savefig(OUTPUT_DIR + "losses_" + str(epoch_n) + ".png")
             plt.close()
 
-    def show_samples(self, sample_images, name, epoch, mini_epoch_n):
+    def show_samples(self, sample_images, name, epoch):
         figure, axes = plt.subplots(1, len(sample_images), figsize=(128, 128))
         for index, axis in enumerate(axes):
             axis.axis('off')
             image_array = sample_images[index]
             axis.imshow(image_array)
             image = Image.fromarray(image_array)
-            image.save(name + "faces_" + str(epoch) + "_" + str(mini_epoch_n) + "_" + str(index) + ".png")
+            image.save(name + "faces_" + str(epoch) + "_" + str(index) + ".png")
         plt.close()
 
-    def save_imgs(self, epoch, mini_epoch_n):
+    def save_imgs(self, epoch):
         r = 5
         noise = np.random.uniform(-1, 1, (r, self.latent_dim))
         samples = self.generator.predict(noise)
         sample_images = [((sample + 1.0) * 127.5).astype(np.uint8) for sample in samples]
-        self.show_samples(sample_images, OUTPUT_DIR, epoch, mini_epoch_n)
+        self.show_samples(sample_images, OUTPUT_DIR, epoch)
 
 
+# Path to project folder
 BASE_PATH = "E:/PycharmProjects/Faces-DCGAN"
-
-DATASET_LIST_PATH = BASE_PATH + "/input/100k.txt"
-INPUT_DATA_DIR = BASE_PATH + "/input/100k/100k/"
-OUTPUT_DIR = './{date:%Y-%m-%d_%H-%M-%S}/'.format(date=datetime.datetime.now())
-SAVE_PATH = BASE_PATH + '/models/{date:%Y-%m-%d_%H-%M-%S}/'.format(date=datetime.datetime.now())
-
 # Path to folder with checkpoints and which epoch to load
 START_EPOCH = None
 LOAD_WEIGHTS_PATH = BASE_PATH + '/models/2020-01-26_20-56-42/'
+
+
+DATASET_LIST_PATH = BASE_PATH + "/input/100k.txt"
+INPUT_DATA_DIR = BASE_PATH + "/input/100k/100k/"
+OUTPUT_DIR = BASE_PATH + '/output/{date:%Y-%m-%d_%H-%M-%S}/'.format(date=datetime.datetime.now())
+SAVE_PATH = BASE_PATH + '/models/{date:%Y-%m-%d_%H-%M-%S}/'.format(date=datetime.datetime.now())
 
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
@@ -177,7 +178,7 @@ if not os.path.exists(SAVE_PATH):
 DATASET = [INPUT_DATA_DIR + str(line).rstrip() for line in open(DATASET_LIST_PATH,"r")]
 DATASET_SIZE = len(DATASET)
 
-print ("Input: " + str(DATASET_SIZE))
+print ("Input size: " + str(DATASET_SIZE))
 
 dcgan = DCGAN()
 dcgan.train(epochs=200, batch_size=64)
