@@ -1,19 +1,20 @@
 from __future__ import print_function, division
 
+import datetime
 import os
 import random
 import time
+from glob import glob
+
 import matplotlib.pyplot as plt
 import numpy as np
-import datetime
+from PIL import Image
+from keras.initializers import RandomNormal
 from keras.layers import Input, Dense, Reshape, Flatten, Conv2DTranspose, BatchNormalization, Activation
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import Conv2D
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
-from keras.initializers import RandomNormal
-from PIL import Image
-from glob import glob
 
 
 class DCGAN():
@@ -44,19 +45,24 @@ class DCGAN():
         model.add(Dense(8 * 8 * 1024, activation="linear", input_dim=self.latent_dim))
         model.add(Reshape((8, 8, 1024)))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Conv2DTranspose(filters=512, kernel_size=[5, 5], strides=[2, 2], kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
+        model.add(Conv2DTranspose(filters=512, kernel_size=[5, 5], strides=[2, 2],
+                                  kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
         model.add(BatchNormalization(epsilon=0.00005, trainable=True))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Conv2DTranspose(filters=256, kernel_size=[5, 5], strides=[2, 2], kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
+        model.add(Conv2DTranspose(filters=256, kernel_size=[5, 5], strides=[2, 2],
+                                  kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
         model.add(BatchNormalization(epsilon=0.00005, trainable=True))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Conv2DTranspose(filters=128, kernel_size=[5, 5], strides=[2, 2], kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
+        model.add(Conv2DTranspose(filters=128, kernel_size=[5, 5], strides=[2, 2],
+                                  kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
         model.add(BatchNormalization(epsilon=0.00005, trainable=True))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Conv2DTranspose(filters=64, kernel_size=[5, 5], strides=[2, 2], kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
+        model.add(Conv2DTranspose(filters=64, kernel_size=[5, 5], strides=[2, 2],
+                                  kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
         model.add(BatchNormalization(epsilon=0.00005, trainable=True))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Conv2DTranspose(filters=self.channels, kernel_size=[5, 5], strides=[1, 1], kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
+        model.add(Conv2DTranspose(filters=self.channels, kernel_size=[5, 5], strides=[1, 1],
+                                  kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
         model.add(Activation("tanh"))
         print("Generator:")
         model.summary()
@@ -66,19 +72,25 @@ class DCGAN():
 
     def build_discriminator(self):
         model = Sequential()
-        model.add(Conv2D(filters=64, kernel_size=[5, 5], strides=[2, 2], kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), input_shape=self.img_shape, padding="same"))
+        model.add(Conv2D(filters=64, kernel_size=[5, 5], strides=[2, 2],
+                         kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), input_shape=self.img_shape,
+                         padding="same"))
         model.add(BatchNormalization(epsilon=0.00005, trainable=True))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Conv2D(filters=128, kernel_size=[5, 5], strides=[2, 2], kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
+        model.add(Conv2D(filters=128, kernel_size=[5, 5], strides=[2, 2],
+                         kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
         model.add(BatchNormalization(epsilon=0.00005, trainable=True))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Conv2D(filters=256, kernel_size=[5, 5], strides=[2, 2], kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
+        model.add(Conv2D(filters=256, kernel_size=[5, 5], strides=[2, 2],
+                         kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
         model.add(BatchNormalization(epsilon=0.00005, trainable=True))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Conv2D(filters=512, kernel_size=[5, 5], strides=[1, 1], kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
+        model.add(Conv2D(filters=512, kernel_size=[5, 5], strides=[1, 1],
+                         kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
         model.add(BatchNormalization(epsilon=0.00005, trainable=True))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Conv2D(filters=1024, kernel_size=[5, 5], strides=[2, 2], kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
+        model.add(Conv2D(filters=1024, kernel_size=[5, 5], strides=[2, 2],
+                         kernel_initializer=RandomNormal(mean=0.0, stddev=0.02), padding="same"))
         model.add(BatchNormalization(epsilon=0.00005, trainable=True))
         model.add(LeakyReLU(alpha=0.2))
         model.add(Flatten())
@@ -106,7 +118,8 @@ class DCGAN():
         return batches
 
     def train(self, epochs, batch_size=64):
-        x_train = np.asarray([np.asarray(Image.open(file).resize((self.img_rows, self.img_cols))) for file in glob(INPUT_DATA_DIR + '*')])
+        x_train = np.asarray([np.asarray(Image.open(file).resize((self.img_rows, self.img_cols))) for file in
+                              glob(INPUT_DATA_DIR + '*')])
         valid = np.ones((batch_size, 1)) * random.uniform(0.9, 1.0)
         fake = np.zeros((batch_size, 1))
         epoch_n = 0
@@ -128,7 +141,8 @@ class DCGAN():
                 g_loss = self.combined.train_on_batch(noise, valid)
                 d_losses.append(d_loss)
                 g_losses.append(g_loss)
-                print("Batch " + str(mini_epoch_n) + " in epoch " + str(epoch_n) + " with D: " + str(d_loss) + " G: " + str(g_loss) + " finished in " + str(time.time() - start_time))
+                print("Batch " + str(mini_epoch_n) + " in epoch " + str(epoch_n) + " with D: " + str(
+                    d_loss) + " G: " + str(g_loss) + " finished in " + str(time.time() - start_time))
 
             print("Epoch " + str(epoch_n) + " finished in " + str(time.time() - start_time))
             self.generator.save_weights(SAVE_PATH + 'faces_g_' + str(epoch_n) + '.h5')
@@ -165,7 +179,6 @@ BASE_PATH = "E:/PycharmProjects/Faces-DCGAN"
 START_EPOCH = None
 LOAD_WEIGHTS_PATH = BASE_PATH + '/models/2020-01-26_20-56-42/'
 
-
 DATASET_LIST_PATH = BASE_PATH + "/input/100k.txt"
 INPUT_DATA_DIR = BASE_PATH + "/input/100k/100k/"
 OUTPUT_DIR = BASE_PATH + '/output/{date:%Y-%m-%d_%H-%M-%S}/'.format(date=datetime.datetime.now())
@@ -175,10 +188,10 @@ if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 if not os.path.exists(SAVE_PATH):
     os.makedirs(SAVE_PATH)
-DATASET = [INPUT_DATA_DIR + str(line).rstrip() for line in open(DATASET_LIST_PATH,"r")]
+DATASET = [INPUT_DATA_DIR + str(line).rstrip() for line in open(DATASET_LIST_PATH, "r")]
 DATASET_SIZE = len(DATASET)
 
-print ("Input size: " + str(DATASET_SIZE))
+print("Input size: " + str(DATASET_SIZE))
 
 dcgan = DCGAN()
 dcgan.train(epochs=200, batch_size=64)
